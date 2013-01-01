@@ -1,4 +1,0 @@
-solrpy
-======
-
-clone of solrpy
