@@ -1,4 +1,14 @@
 import math
+from django.core import paginator
+
+
+class PageNotAnInteger(paginator.PageNotAnInteger):
+    pass
+
+
+class EmptyPage(paginator.EmptyPage):
+    pass
+
 
 class SolrPaginator:
     """
@@ -23,7 +33,7 @@ class SolrPaginator:
     """
 
     def __init__(self, result, default_page_size=None):
-        self.params = result.header['params']
+        self.params = result._params
         self.result = result
         self.query = result._query
 
@@ -35,10 +45,11 @@ class SolrPaginator:
             except ValueError:
                 raise ValueError('default_page_size must be an integer')
 
-            if self.page_size < len(self.result.results):
-                raise ValueError('Invalid default_page_size specified, lower '
-                                 'than number of results')
-
+            #if self.page_size < len(self.result.results):
+            #    raise ValueError('Invalid default_page_size specified, lower '
+            #                     'than number of results')
+            if self.page_size < 0:
+                raise ValueError('default_page_size must be a positive value')
         else:
             self.page_size = len(self.result.results)
 
@@ -60,30 +71,31 @@ class SolrPaginator:
         # Add one because range is right-side exclusive
         return range(1, self.num_pages + 1)
 
-    def _fetch_page(self, start=0):
+    def _fetch_page(self, start=0, rows=10):
         """Retrieve a new result response from Solr."""
         # need to convert the keys to strings to pass them as parameters
         new_params = {}
         for k, v in self.params.items():
-            new_params[str(k)] = v.encode('utf-8')
+            new_params[str(k)] = str(v).encode('utf-8')
 
         # get the new start index
         new_params['start'] = start
+        new_params['rows'] = rows
         return self.query(**new_params)
 
     def page(self, page_num=1):
         """Return the requested Page object"""
         try:
-            int(page_num)
+            page_num = int(page_num)
         except:
-            raise 'PageNotAnInteger'
+            raise PageNotAnInteger
 
         if page_num not in self.page_range:
-            raise 'EmptyPage', 'That page does not exist.'
+            raise EmptyPage('That page does not exist.')
 
         # Page 1 starts at 0; take one off before calculating
         start = (page_num - 1) * self.page_size
-        new_result = self._fetch_page(start=start)
+        new_result = self._fetch_page(start=start, rows=self.page_size)
         return SolrPage(new_result.results, page_num, self)
 
 
