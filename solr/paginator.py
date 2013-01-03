@@ -1,13 +1,5 @@
 import math
-from django.core import paginator
-
-
-class PageNotAnInteger(paginator.PageNotAnInteger):
-    pass
-
-
-class EmptyPage(paginator.EmptyPage):
-    pass
+from django.core.paginator import PageNotAnInteger, EmptyPage
 
 
 class SolrPaginator:
@@ -76,7 +68,9 @@ class SolrPaginator:
         # need to convert the keys to strings to pass them as parameters
         new_params = {}
         for k, v in self.params.items():
-            new_params[str(k)] = str(v).encode('utf-8')
+            if not isinstance(v, basestring):
+                v = str(v)
+            new_params[str(k)] = v.encode('utf-8')
 
         # get the new start index
         new_params['start'] = start
