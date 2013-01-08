@@ -1,6 +1,8 @@
 Solr API for Python
 ===================
 
+**Fork from solrpy 0.9.5.**
+
 ``solrpy`` is a Python client for Solr_, an enterprise search server
 built on top of Lucene_.  ``solrpy`` allows you to add documents to a
 Solr instance, and then to perform queries and gather search results
